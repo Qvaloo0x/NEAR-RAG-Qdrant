@@ -39,6 +39,7 @@ print(rag_complete("What are Access Keys?"))
 - Blockchain (NEAR)
 - Colab prototyping
 
-![RAG Demo](https://via.placeholder.com/800x400/0f0f23/ffffff?text=RAG+NEAR+Qdrant)
+![RAG Demo](https://colab.research.google.com/drive/1qNwfm4vzEUNiT75lPY8fb496ddd2HOp2#scrollTo=YztbL54bHpoO
+)
 
 **Built for builders exploring RAG + NEAR potential.**
