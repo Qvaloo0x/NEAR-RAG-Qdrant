@@ -1,45 +1,38 @@
 # NEAR-RAG-Qdrant 🚀
 
-This project showcases a lightweight Retrieval-Augmented Generation (RAG) pipeline combining NEAR blockchain documentation with Qdrant Cloud vector search and Sentence Transformers. Ideal for developers exploring bilingual RAG use cases and semantic search over blockchain content.
+This repository implements a Retrieval-Augmented Generation (RAG) system specialized in the NEAR Protocol ecosystem. By leveraging Qdrant Cloud as a high-performance vector database and sentence-level embeddings, the system provides accurate, context-aware answers to complex blockchain infrastructure queries.
 
 ## Live Demo
-
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1qNwfm4vzEUNiT75lPY8fb496ddd2HOp2#scrollTo=YztbL54bHpoO)
+[🚀 Open in Colab](https://colab.research.google.com/drive/1qNwfm4vzEUNiT75lPY8fb496ddd2HOp2#scrollTo=YztbL54bHpoO)
 
 ## Tech Stack
-
-- ✅ **Qdrant Cloud**
-- ✅ **Sentence Transformers (1536-dim)**
-- ✅ **5 NEAR Chunks per Query**
-- ✅ **Bilingual Search**
-- ✅ **rag_complete() Function**
+- ✅ **Qdrant Cloud**: Vector database for efficient similarity search.
+- ✅ **Sentence Transformers (1536dim)**: High-dimensional embeddings for semantic accuracy.
+- ✅ **5 NEAR Chunks**: Optimized data ingestion from NEAR Protocol documentation (Accounts, Access Keys, Sharding, Transactions).
+- ✅ **Bilingual Support**: English ↔ Spanish retrieval.
+- ✅ **rag_complete()**: Production-ready unified function.
 
 ## RAG Demo
 
 ````python
 print(rag_complete("What are Access Keys?"))
-# → "Access Keys enable secure delegation..."
+# → "Access Keys enable secure delegation of permissions for NEAR accounts......"
 ````
 
 ## Features
 
-- 🔍 Fast semantic retrieval
-- 🌐 Bilingual support (EN/ES)
-- ⚡ Minimal setup via Colab
-- 🔐 Blockchain-focused content
-- 🧠 Lightweight yet powerful
+- 🧠 Semantic search English/Spanish
+- ⚡ Multilingual embeddings (384→1536dims)
+- 🔍 Full payloads (title, tags, content)
+- 📊 5+ NEAR Protocol documents indexed
 
 ## Portfolio Skills
-
-**AI / Blockchain Integration**
-- RAG pipelines
-- Vector search (Qdrant)
-- LLM prompting
-- NLP transformers
-- Blockchain (NEAR)
-- Colab prototyping
+**Data Analyst + Web3:**
+- Vector databases (Qdrant)
+- Embeddings & RAG pipelines
+- Python data engineering
+- NEAR Protocol expertise
 
 ## Live Demo
 [🚀 Open in Colab](https://colab.research.google.com/drive/1qNwfm4vzEUNiT75lPY8fb496ddd2HOp2#scrollTo=YztbL54bHpoO)
 
-**Built for builders exploring RAG + NEAR potential.**
