@@ -36,3 +36,20 @@ print(rag_complete("What are Access Keys?"))
 ## Live Demo
 [🚀 Open in Colab](https://colab.research.google.com/drive/1qNwfm4vzEUNiT75lPY8fb496ddd2HOp2#scrollTo=YztbL54bHpoO)
 
+## Open Collaboration
+**Looking for co-founders to:**
+- Deploy on NEAR BOS
+- Chain Abstraction integration  
+- Production API
+
+DM open! 🚀
+
+
+## About the Author
+**20+ years Technical Support → 2 years Data Analyst + 6 years Web3**
+
+- Google Cloud Data Analyst (certification in progress)
+- Data & CX Analyst | No-Code Automation & AI Insights | CX & Product Analytics | Blockchain Enthusiast
+- Python RAG pipelines
+- NEAR Protocol expertise
+- Cuba → Digital Nomad
