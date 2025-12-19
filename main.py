@@ -1,10 +1,13 @@
+import streamlit as st
 import requests
 import json
 import os
 from dotenv import load_dotenv
 from sentence_transformers import SentenceTransformer
 import numpy as np
-import streamlit as st
+
+# 🔥 FIXED: page_config FUERA de main() - Streamlit Cloud OK
+st.set_page_config(page_title="🤖 Y-24 Chatbot - NEAR Assistant", layout="wide")
 
 # 🔒 SECURITY: Load from .env
 load_dotenv()
@@ -104,8 +107,6 @@ def near_assistant(query):
 
 # ========== STREAMLIT UI ==========
 def main():
-    st.set_page_config(page_title="🤖 Y-24 Chatbot - NEAR Assistant", layout="wide")
-    
     st.title("🤖 Y-24 Chatbot - NEAR Protocol Assistant")
     st.markdown("**Y-24 Labs: NEAR intents + RAG assistant**")
     
