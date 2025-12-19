@@ -24,16 +24,13 @@ model = load_model()
 
 def search_qdrant(query_vector, limit=3):
     """Search Qdrant with payload"""
-
-    # 1) Leer primero de la config del sidebar; si no, del .env
+    # Leer primero de la config del sidebar; si no, del .env
     qdrant_url = st.session_state.get("qdrant_url") or QDRANT_URL
     qdrant_key = st.session_state.get("qdrant_key") or QDRANT_API_KEY
 
-    # 2) Si no hay URL o KEY, no se puede buscar
     if not qdrant_url or not qdrant_key:
         return []
 
-    # 3) Endpoint correcto de search con payload
     url = f"{qdrant_url}/collections/{COLLECTION}/points/search"
     headers = {
         "Content-Type": "application/json",
@@ -48,7 +45,6 @@ def search_qdrant(query_vector, limit=3):
     try:
         response = requests.post(url, headers=headers, json=body)
         data = response.json()
-        # 4) Devolvemos directamente la lista de hits
         return data.get("result", [])
     except Exception as e:
         print("Qdrant error:", e)
@@ -59,20 +55,17 @@ def rag_near_fixed(query_text):
     if not model:
         return "Model not loaded"
     
-    # El modelo all-MiniLM-L6-v2 devuelve 384 dims → se rellena hasta 1536
     query_vector = np.pad(
         model.encode(query_text),
         (0, 1536 - 384),
         'constant'
     ).tolist()
 
-    # Ahora search_qdrant devuelve una lista de hits, no un dict
     hits = search_qdrant(query_vector, limit=3)
 
     contexts = []
     for point in hits:
         payload = point.get("payload", {})
-        # En tu Qdrant el campo de texto es "content"
         contexts.append(payload.get("content", f"Chunk ID: {point.get('id')}"))
 
     return "\n\n---\n\n".join(contexts) if contexts else "No docs found"
@@ -110,7 +103,7 @@ def near_assistant(query):
             return f"""
 🚀 **NEAR INTENT DETECTED**
 
-**{intent['type'].upper():}**
+**{intent['type'].upper()}**
 • From: {intent['from']}
 • To: {intent['to']}  
 • Amount: {intent['amount']}
@@ -134,9 +127,9 @@ def main():
     st.sidebar.markdown("### 🤖 **Y-24 Chatbot**")
     st.sidebar.markdown("*Gnomai Labs - NEAR RAG Assistant*")
     
-    # Guardar en session_state para que search_qdrant pueda leerlo
-    qdrant_url = st.sidebar.text_input("Qdrant URL", type="password")
-    qdrant_key = st.sidebar.text_input("Qdrant Key", type="password")
+    qdrant_url = st.sidebar.text_input("Qdrant URL", type="password", value=st.session_state.get("qdrant_url", ""))
+    qdrant_key = st.sidebar.text_input("Qdrant Key", type="password", value=st.session_state.get("qdrant_key", ""))
+    
     if st.sidebar.button("Save Config"):
         st.session_state["qdrant_url"] = qdrant_url
         st.session_state["qdrant_key"] = qdrant_key
