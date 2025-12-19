@@ -104,13 +104,16 @@ def near_assistant(query):
 
 # ========== STREAMLIT UI ==========
 def main():
-    st.set_page_config(page_title="NEAR Intents + RAG", layout="wide")
+    st.set_page_config(page_title="🤖 Y-24 Chatbot - NEAR Assistant", layout="wide")
     
-    st.title("🚀 NEAR Intents + RAG Assistant")
-    st.markdown("**AI que detecta transacciones NEAR + responde preguntas Protocol**")
+    st.title("🤖 Y-24 Chatbot - NEAR Protocol Assistant")
+    st.markdown("**Y-24 Labs: NEAR intents + RAG assistant**")
     
     # Sidebar config
     st.sidebar.header("🔧 Config")
+    st.sidebar.markdown("### 🤖 **Y-24 Chatbot**")
+    st.sidebar.markdown("*Gnomai Labs - NEAR RAG Assistant*")
+    
     qdrant_url = st.sidebar.text_input("Qdrant URL", type="password")
     qdrant_key = st.sidebar.text_input("Qdrant Key", type="password")
     if st.sidebar.button("Save Config"):
@@ -132,9 +135,9 @@ def main():
         with st.chat_message("assistant"):
             with st.spinner("Processing..."):
                 response = near_assistant(prompt)
-                st.markdown(response)
+                st.markdown(f"**🤖 Y-24:**\n\n{response}")
         
-        st.session_state.messages.append({"role": "assistant", "content": response})
+        st.session_state.messages.append({"role": "assistant", "content": f"**🤖 Y-24:**\n\n{response}"})
 
 if __name__ == "__main__":
     main()
