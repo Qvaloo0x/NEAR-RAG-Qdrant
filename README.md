@@ -8,7 +8,7 @@
 **Production-ready RAG Pipeline** combining:
 - **NEAR Protocol** documentation
 - **Qdrant Vector Database**
-- **LangChain** + **OpenAI** embeddings
+- **LangChain** + **Deepseek** embeddings
 - **Streamlit** professional UI
 
 ## ✅ **GitHub Actions: PASSING ✅**
@@ -25,30 +25,30 @@ git clone https://github.com/Qvaloo0x/NEAR-RAG-Qdrant.git
 cd NEAR-RAG-Qdrant
 
 pip install -r requirements.txt
-pip install langchain langchain-community langchain-openai
+pip install langchain langchain-community langchain-deepseek
 
 streamlit run main.py
 
-
 ## 🛠️ **Tech Stack**
 
-🤖 LangChain + OpenAI Embeddings
+🤖 LangChain + DeepSeek Embeddings
 🗄️ Qdrant Vector Database
 🌐 NEAR Protocol Documentation
 🎨 Streamlit UI
 🐍 Python 3.11
 ⚙️ GitHub Actions CI/CD
 
-
 ## 🎯 **Features**
 - 🔍 **Semantic Search** over NEAR docs
 - 💬 **Contextual RAG Chatbot**
-- ⚡ **Real-time** vector embeddings
+- ⚡ **On-demand** vector embeddingss
 - 📊 **Qdrant** similarity search
 
 ## 👨‍💻 **Author**
+
 **Qvaloo0x** - Gnomai Labs Co-founder  
-**20+ years** Customer Support + Data Analytics  
+**20+ years** Customer Support 
+**2 years Data Analytics  
 **Skills:** Web3, AI, Cloud Data, Python
 
 ## 🛠️ **Production Setup**
@@ -56,7 +56,7 @@ streamlit run main.py
 1. **Qdrant Cloud** [Free Account](https://cloud.qdrant.io)
 2. **Add API Keys** to `.env`:
 
-OPENAI_API_KEY=sk-...
+DEEPSEEK_API_KEY=sk-...
 QDRANT_API_KEY=...
 QDRANT_URL=...
 
