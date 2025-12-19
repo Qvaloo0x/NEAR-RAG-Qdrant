@@ -1,25 +1,71 @@
-# 🚀 NEAR Intents + RAG Assistant
+# 🚀 NEAR RAG + Qdrant Vector Database
 
-**Streamlit app** that detects **NEAR Intents** (swaps, transfers) + answers NEAR Protocol questions with Qdrant RAG.
+[![GitHub Actions](https://github.com/Qvaloo0x/NEAR-RAG-Qdrant/actions/workflows/deploy.yml/badge.svg)](https://github.com/Qvaloo0x/NEAR-RAG-Qdrant/actions)
+[![Status](https://img.shields.io/badge/Status-PRODUCTION%20READY-brightgreen)](https://github.com/Qvaloo0x/NEAR-RAG-Qdrant/actions)
 
-## ✨ Features
-- ✅ **Intent Detection**: "Swap 100 USDC to NEAR" 
-- ✅ **Qdrant RAG**: NEAR docs search
-- ✅ **Streamlit UI**: Chat interface
-- ✅ **Secure**: `.env` keys only
+## ✨ **AI-Powered NEAR Protocol Search Engine**
 
-## 🚀 Quick Start
+**Production-ready RAG Pipeline** combining:
+- **NEAR Protocol** documentation
+- **Qdrant Vector Database**
+- **LangChain** + **OpenAI** embeddings
+- **Streamlit** professional UI
+
+## ✅ **GitHub Actions: PASSING ✅**
+
+✅ CI/CD Pipeline working
+✅ All imports tested successfully
+✅ Dependencies installed correctly
+✅ Ready for production deploy
+
+
+## 🏃‍♂️ **Quick Start (2 minutes)**
+
+git clone https://github.com/Qvaloo0x/NEAR-RAG-Qdrant.git
+cd NEAR-RAG-Qdrant
 
 pip install -r requirements.txt
-cp .env.example .env
+pip install langchain langchain-community langchain-openai
 
-Edit .env with YOUR Qdrant keys
 streamlit run main.py
 
 
-## 🛠️ Setup
-1. [Qdrant Cloud](https://cloud.qdrant.io) free account
-2. Add your API keys to `.env`
-3. Run locally or deploy to Streamlit Cloud
+## 🛠️ **Tech Stack**
 
-**Made for NEAR Protocol** | Qvaloo0x
+🤖 LangChain + OpenAI Embeddings
+🗄️ Qdrant Vector Database
+🌐 NEAR Protocol Documentation
+🎨 Streamlit UI
+🐍 Python 3.11
+⚙️ GitHub Actions CI/CD
+
+
+## 🎯 **Features**
+- 🔍 **Semantic Search** over NEAR docs
+- 💬 **Contextual RAG Chatbot**
+- ⚡ **Real-time** vector embeddings
+- 📊 **Qdrant** similarity search
+
+## 👨‍💻 **Author**
+**Qvaloo0x** - Gnomai Labs Co-founder  
+**20+ years** Customer Support + Data Analytics  
+**Skills:** Web3, AI, Cloud Data, Python
+
+## 🛠️ **Production Setup**
+
+1. **Qdrant Cloud** [Free Account](https://cloud.qdrant.io)
+2. **Add API Keys** to `.env`:
+
+OPENAI_API_KEY=sk-...
+QDRANT_API_KEY=...
+QDRANT_URL=...
+
+3. **Local:** `streamlit run main.py`
+4. **Deploy:** Streamlit Cloud / Railway / Vercel
+
+**Made for NEAR Protocol** | **Qvaloo0x** - Gnomai Labs
+
+
+⭐ **Star if helpful for your portfolio!** 🚀
+
+
