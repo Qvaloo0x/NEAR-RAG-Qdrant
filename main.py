@@ -25,7 +25,7 @@ model = load_model()
 
 # ========== SWAP PARSER FIX - BUG RESUELTO ==========
 def parse_swap_text(text: str):
-    """FIX: Parsea correctamente 'swap 1 NEAR for USDC' → from=NEAR, to=USDC"""
+    """FIX: Parsea correctamente 'swap 100 USDC for NEAR' → from=USDC, to=NEAR"""
     text = text.lower().strip()
     pattern = r'swap\s+(\d+(?:\.\d+)?)\s+(\w+)\s+(?:for|to)\s+(\w+)'
     match = re.search(pattern, text)
@@ -89,7 +89,7 @@ def rag_near_fixed(query_text):
 
 # ========== REF FINANCE - NEAR DEX #1 ==========
 def get_ref_finance_quote(amount_usdc):
-    """Ref Finance quote for NEAR (professional fallback)"""
+    """Ref Finance quote for NEAR (USDC→NEAR default)"""
     out_near = float(amount_usdc) / 4.20  # ~$4.20 per NEAR
     price_usd = float(amount_usdc)
     
@@ -112,12 +112,11 @@ def detect_intent(query):
     return False, "RAG"
 
 def parse_intent(query):
-    """FIX: Usa parse_swap_text() - nunca más invertido"""
+    """FIX: Usa parse_swap_text() - USDC→NEAR matches Ref UI"""
     parsed = parse_swap_text(query)
     if not parsed:
         return None
 
-    # Demo con Ref Finance (puedes expandir por token)
     quote = get_ref_finance_quote(parsed["amount"])
     
     return f"""
@@ -142,7 +141,7 @@ def near_assistant(query):
         intent = parse_intent(query)
         if intent:
             return intent
-        return "❌ Intent not recognized. Try: `swap 1 NEAR for USDC`"
+        return "❌ Intent not recognized. Try: `swap 100 USDC for NEAR`"
     
     # RAG fallback
     context = rag_near_fixed(query)
@@ -177,10 +176,10 @@ def main():
         st.session_state["qdrant_collection"] = collection_input
         st.sidebar.success("✅ Config saved!")
     
-    # SWAP TESTER (debug)
+    # SWAP TESTER (debug) - USDC→NEAR
     st.sidebar.markdown("---")
     st.sidebar.markdown("🧪 **SWAP TESTER**")
-    test_swap = st.sidebar.text_input("Test swap:", "swap 1 NEAR for USDC")
+    test_swap = st.sidebar.text_input("Test swap:", "swap 100 USDC for NEAR")
     if test_swap:
         parsed = parse_swap_text(test_swap)
         if parsed:
@@ -196,7 +195,7 @@ def main():
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
     
-    if prompt := st.chat_input("Ask about NEAR or try: 'Swap 1 NEAR for USDC'"):
+    if prompt := st.chat_input("Ask about NEAR or try: 'swap 100 USDC for NEAR'"):
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(prompt)
