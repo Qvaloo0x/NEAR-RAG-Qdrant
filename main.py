@@ -5,16 +5,34 @@ import requests
 from qdrant_client import QdrantClient
 from sentence_transformers import SentenceTransformer
 
-# Load environment variables
-load_dotenv()
-QDRANT_URL = os.getenv("QDRANT_URL")
-QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
-CMC_API_KEY = os.getenv("CMC_API_KEY")
-DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
+# Carga EXPLÍCITA del .env (funciona en venv)
+load_dotenv(dotenv_path='.env')
+
+# Lee DIRECTO del archivo si dotenv falla
+def get_env(key, default=''):
+    value = os.getenv(key)
+    if not value:
+        # Fallback: lee directo del .env
+        try:
+            with open('.env', 'r') as f:
+                for line in f:
+                    if line.startswith(key + '='):
+                        value = line.split('=', 1)[1].strip()
+                        break
+        except:
+            pass
+    return value.strip()
+
+QDRANT_URL = get_env('QDRANT_URL')
+QDRANT_API_KEY = get_env('QDRANT_API_KEY')
+CMC_API_KEY = get_env('CMC_API_KEY')
+DEEPSEEK_API_KEY = get_env('DEEPSEEK_API_KEY')
 
 # Sidebar API status
 st.sidebar.title("🔧 API Status")
 st.sidebar.success("✅ Interface OK")
+st.sidebar.info(f"CMC Key: {'✅ OK' if CMC_API_KEY else '❌ MISSING'} ({len(CMC_API_KEY)} chars)")
+st.sidebar.info(f"Qdrant: {'✅ OK' if QDRANT_URL else '❌ MISSING'}")
 
 # Initialize clients with fallbacks
 @st.cache_resource
@@ -51,7 +69,7 @@ def get_near_price_usd():
         resp = requests.get(url, headers=headers, params=params, timeout=5)
         if resp.status_code == 200:
             price = float(resp.json()["data"]["NEAR"]["quote"]["USD"]["price"])
-            st.sidebar.success(f"✅ CMC: ${price}")
+            st.sidebar.success(f"✅ CMC: ${price:.2f}")
             return price
         else:
             st.sidebar.error(f"❌ CMC: {resp.status_code}")
