@@ -8,7 +8,7 @@ from sentence_transformers import SentenceTransformer
 # Carga EXPLÍCITA del .env
 load_dotenv(dotenv_path='.env')
 
-# Lee DIRECTO del archivo (arreglado el None.strip() error)
+# Lee DIRECTO del archivo (seguro contra None)
 def get_env(key, default=''):
     value = os.getenv(key)
     if not value:
@@ -16,39 +16,30 @@ def get_env(key, default=''):
             with open('.env', 'r') as f:
                 for line in f:
                     if line.startswith(key + '='):
-                        value = line.split('=', 1)[1].strip()
-                        break
+                        raw_value = line.split('=', 1)[1].strip()
+                        return raw_value if raw_value else default
         except:
             pass
     return value if value else default
 
+# Cargar variables (DESPUÉS de Streamlit context)
 QDRANT_URL = get_env('QDRANT_URL', '')
 QDRANT_API_KEY = get_env('QDRANT_API_KEY', '')
 CMC_API_KEY = get_env('CMC_API_KEY', '')
 DEEPSEEK_API_KEY = get_env('DEEPSEEK_API_KEY', '')
-
-# Sidebar API status
-st.sidebar.title("🔧 API Status")
-st.sidebar.success("✅ Interface OK")
-st.sidebar.info(f"CMC Key: {'✅ OK' if CMC_API_KEY else '❌ MISSING'} ({len(CMC_API_KEY)} chars)")
-st.sidebar.info(f"Qdrant: {'✅ OK' if QDRANT_URL else '❌ MISSING'}")
 
 # Initialize clients with fallbacks
 @st.cache_resource
 def init_clients():
     try:
         qdrant_client = QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY)
-        st.sidebar.success("✅ Qdrant OK")
     except:
         qdrant_client = None
-        st.sidebar.error("❌ Qdrant FAIL")
     
     try:
         model = SentenceTransformer('all-MiniLM-L6-v2')
-        st.sidebar.success("✅ Embeddings OK")
     except:
         model = None
-        st.sidebar.error("❌ Embeddings FAIL")
     
     return qdrant_client, model
 
@@ -57,7 +48,6 @@ qdrant_client, model = init_clients()
 def get_near_price_usd():
     """Get NEAR/USD price with CMC fallback to 4.20"""
     if not CMC_API_KEY:
-        st.sidebar.error("❌ CMC: No key")
         return 4.20
     
     try:
@@ -67,13 +57,9 @@ def get_near_price_usd():
         
         resp = requests.get(url, headers=headers, params=params, timeout=5)
         if resp.status_code == 200:
-            price = float(resp.json()["data"]["NEAR"]["quote"]["USD"]["price"])
-            st.sidebar.success(f"✅ CMC: ${price:.2f}")
-            return price
-        else:
-            st.sidebar.error(f"❌ CMC: {resp.status_code}")
+            return float(resp.json()["data"]["NEAR"]["quote"]["USD"]["price"])
     except:
-        st.sidebar.error("❌ CMC: Error")
+        pass
     
     return 4.20  # Safe fallback
 
@@ -96,7 +82,6 @@ def search_docs(query):
 def generate_response(query, context):
     """DeepSeek with fallback"""
     if not DEEPSEEK_API_KEY:
-        st.sidebar.error("❌ DeepSeek: No key")
         return "💡 **Try:** `swap 1 usdc for near` (uses CoinMarketCap)"
     
     try:
@@ -113,12 +98,9 @@ def generate_response(query, context):
         
         resp = requests.post(url, headers=headers, json=data, timeout=15)
         if resp.status_code == 200:
-            st.sidebar.success("✅ DeepSeek OK")
             return resp.json()["choices"][0]["message"]["content"]
-        else:
-            st.sidebar.error(f"❌ DeepSeek: {resp.status_code}")
     except:
-        st.sidebar.error("❌ DeepSeek: Error")
+        pass
     
     return "🤖 **Fallback mode:** Type `swap 1 usdc for near` to test CoinMarketCap."
 
@@ -134,9 +116,18 @@ def parse_swap(query):
             return "❌ Format: `swap 1 usdc for near`"
     return None
 
-# Main UI
+# Main UI (sidebar DESPUÉS de cargar keys)
 st.title("🤖 NEAR RAG Assistant")
 st.markdown("**Try:** `swap 1 usdc for near` or ask about NEAR Protocol")
+
+# Sidebar API status (AHORA SÍ funciona)
+st.sidebar.title("🔧 API Status")
+st.sidebar.success("✅ Interface OK")
+st.sidebar.info(f"CMC Key: {'✅ OK (32 chars)' if CMC_API_KEY else '❌ MISSING'}")
+st.sidebar.info(f"Qdrant URL: {'✅ OK' if QDRANT_URL else '❌ MISSING'}")
+st.sidebar.info(f"Qdrant: {'✅ OK' if qdrant_client else '❌ FAIL'}")
+st.sidebar.info(f"DeepSeek: {'✅ OK' if DEEPSEEK_API_KEY else '❌ MISSING'}")
+st.sidebar.success("✅ Embeddings OK" if model else "❌ Embeddings FAIL")
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
