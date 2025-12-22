@@ -5,38 +5,17 @@ import requests
 from qdrant_client import QdrantClient
 from sentence_transformers import SentenceTransformer
 
-# Carga EXPLÍCITA del .env PRIMERO
-load_dotenv(dotenv_path='.env')
+# CARGAR .env MUY SIMPLE
+load_dotenv()
 
-# Función get_env MEJORADA (sin errores None)
-def get_env(key, default=''):
-    # Intenta os.getenv primero
-    value = os.getenv(key)
-    if value:
-        return value.strip()
-    
-    # Fallback: lee directo del .env
-    try:
-        with open('.env', 'r') as f:
-            for line in f:
-                line = line.strip()
-                if line.startswith(f"{key}="):
-                    value = line.split('=', 1)[1]
-                    return value.strip()
-    except:
-        pass
-    
-    return default
+# LEER DIRECTO (tu .env YA FUNCIONA)
+CMC_API_KEY = os.getenv('CMC_API_KEY')
+QDRANT_URL = os.getenv('QDRANT_URL') 
+QDRANT_API_KEY = os.getenv('QDRANT_API_KEY')
+DEEPSEEK_API_KEY = os.getenv('DEEPSEEK_API_KEY')
 
-# Cargar TODAS las keys ANTES de cualquier Streamlit
-QDRANT_URL = get_env('QDRANT_URL')
-QDRANT_API_KEY = get_env('QDRANT_API_KEY') 
-CMC_API_KEY = get_env('CMC_API_KEY')
-DEEPSEEK_API_KEY = get_env('DEEPSEEK_API_KEY')
+print(f"DEBUG TERMINAL: CMC_KEY='{CMC_API_KEY}'")  # Mira la terminal
 
-print(f"DEBUG CMC_KEY length: {len(CMC_API_KEY) if CMC_API_KEY else 0}")  # Para terminal
-
-# Initialize clients
 @st.cache_resource
 def init_clients():
     qdrant_client = None
@@ -58,20 +37,18 @@ def init_clients():
 qdrant_client, model = init_clients()
 
 def get_near_price_usd():
-    if not CMC_API_KEY or len(CMC_API_KEY) < 20:
+    if not CMC_API_KEY:
         return 4.20
     
     try:
         url = "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest"
         headers = {"X-CMC_PRO_API_KEY": CMC_API_KEY, "Accept": "application/json"}
         params = {"symbol": "NEAR", "convert": "USD"}
-        
         resp = requests.get(url, headers=headers, params=params, timeout=5)
         if resp.status_code == 200:
             return float(resp.json()["data"]["NEAR"]["quote"]["USD"]["price"])
     except:
         pass
-    
     return 4.20
 
 def parse_swap(query):
@@ -85,22 +62,17 @@ def parse_swap(query):
             return "❌ Format: `swap 1 usdc for near`"
     return None
 
-# UI PRINCIPAL
+# UI
 st.title("🤖 NEAR RAG Assistant")
 st.markdown("**Try:** `swap 1 usdc for near`")
 
-# Sidebar con status REAL (después de cargar keys)
+# Sidebar SIMPLE
 with st.sidebar:
-    st.title("🔧 API Status")
-    st.success("✅ Interface OK")
-    
-    st.info(f"CMC Key: {'✅ OK ({len(CMC_API_KEY)} chars)' if CMC_API_KEY and len(CMC_API_KEY)>20 else '❌ MISSING'}")
-    st.info(f"Qdrant URL: {'✅ OK' if QDRANT_URL else '❌ MISSING'}")
-    st.info(f"Qdrant Client: {'✅ OK' if qdrant_client else '❌ FAIL'}")
-    st.info(f"DeepSeek: {'✅ OK' if DEEPSEEK_API_KEY else '❌ MISSING'}")
-    st.info(f"Embeddings: {'✅ OK' if model else '❌ FAIL'}")
+    st.title("🔧 Status")
+    st.success("✅ Interface")
+    st.metric("CMC Key", f"{len(CMC_API_KEY) if CMC_API_KEY else 0} chars")
+    st.metric("Qdrant URL", "OK" if QDRANT_URL else "MISSING")
 
-# Chat
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -108,7 +80,7 @@ for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-if prompt := st.chat_input("Your message..."):
+if prompt := st.chat_input("Message..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
