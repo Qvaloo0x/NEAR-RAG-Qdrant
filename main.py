@@ -2,6 +2,7 @@ import streamlit as st
 import requests
 import json
 import os
+import re
 from dotenv import load_dotenv
 from sentence_transformers import SentenceTransformer
 import numpy as np
@@ -13,7 +14,7 @@ st.set_page_config(page_title="🤖 Y-24 Chatbot - NEAR Assistant", layout="wide
 load_dotenv()
 QDRANT_URL = os.getenv("QDRANT_URL")
 QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
-COLLECTION = "near_docs"
+COLLECTION_DEFAULT = "near_docs"
 
 # Global model (load once)
 @st.cache_resource
@@ -22,15 +23,32 @@ def load_model():
 
 model = load_model()
 
+# ========== SWAP PARSER FIX - BUG RESUELTO ==========
+def parse_swap_text(text: str):
+    """FIX: Parsea correctamente 'swap 1 NEAR for USDC' → from=NEAR, to=USDC"""
+    text = text.lower().strip()
+    pattern = r'swap\s+(\d+(?:\.\d+)?)\s+(\w+)\s+(?:for|to)\s+(\w+)'
+    match = re.search(pattern, text)
+    if not match:
+        return None
+    
+    amount, from_token, to_token = match.groups()
+    return {
+        "amount": float(amount),
+        "from_token": from_token.upper(),
+        "to_token": to_token.upper()
+    }
+
 def search_qdrant(query_vector, limit=3):
-    """Search Qdrant with payload"""
+    """Search Qdrant with payload - MULTI-COMMUNITY READY"""
     qdrant_url = st.session_state.get("qdrant_url") or QDRANT_URL
     qdrant_key = st.session_state.get("qdrant_key") or QDRANT_API_KEY
+    collection = st.session_state.get("qdrant_collection", COLLECTION_DEFAULT)
 
     if not qdrant_url or not qdrant_key:
         return []
 
-    url = f"{qdrant_url}/collections/{COLLECTION}/points/search"
+    url = f"{qdrant_url}/collections/{collection}/points/search"
     headers = {
         "Content-Type": "application/json",
         "api-key": qdrant_key,
@@ -46,7 +64,7 @@ def search_qdrant(query_vector, limit=3):
         data = response.json()
         return data.get("result", [])
     except Exception as e:
-        print("Qdrant error:", e)
+        st.error(f"Qdrant error: {e}")
         return []
 
 def rag_near_fixed(query_text):
@@ -72,7 +90,6 @@ def rag_near_fixed(query_text):
 # ========== REF FINANCE - NEAR DEX #1 ==========
 def get_ref_finance_quote(amount_usdc):
     """Ref Finance quote for NEAR (professional fallback)"""
-    # Valores realistas para demo (Ref API simplificado)
     out_near = float(amount_usdc) / 4.20  # ~$4.20 per NEAR
     price_usd = float(amount_usdc)
     
@@ -84,28 +101,29 @@ def get_ref_finance_quote(amount_usdc):
         "swap_url": swap_url
     }
 
-# ========== NEAR INTENTS ==========
+# ========== NEAR INTENTS - SWAP BUG FIXED ==========
 def detect_intent(query):
     """Detects transaction vs question"""
     intent_keywords = ['swap', 'exchange', 'send', 'transfer', 'bridge']
     query_lower = query.lower()
     for keyword in intent_keywords:
-        if keyword in query_lower:  # ✅ FIXED: query_lower (no intent_lower)
+        if keyword in query_lower:
             return True, "INTENT"
     return False, "RAG"
 
 def parse_intent(query):
-    """Parse swap intent with Ref Finance"""
-    if "swap" in query.lower():
-        parts = query.lower().split()
-        amount = parts[1] if len(parts) > 1 else "100"
-        
-        quote = get_ref_finance_quote(amount)
-        
-        return f"""
+    """FIX: Usa parse_swap_text() - nunca más invertido"""
+    parsed = parse_swap_text(query)
+    if not parsed:
+        return None
+
+    # Demo con Ref Finance (puedes expandir por token)
+    quote = get_ref_finance_quote(parsed["amount"])
+    
+    return f"""
 🚀 **NEAR INTENT DETECTED** *(Ref Finance)*
 
-**💱 SWAP {amount} USDC → NEAR**
+**💱 SWAP {parsed['amount']} {parsed['from_token']} → {parsed['to_token']}**
 • **Output**: {quote['out_amount']}
 • **Value**: {quote['price_usd']}
 • **DEX Fee**: ~0.3%
@@ -114,8 +132,7 @@ def parse_intent(query):
 [🚀 Ref Finance]({quote['swap_url']})
 
 *Y-24 + Ref Finance (NEAR's #1 DEX)*
-        """
-    return None
+**✅ SWAP PARSER FIXED**"""
 
 def near_assistant(query):
     """Unified RAG + Intents"""
@@ -125,7 +142,7 @@ def near_assistant(query):
         intent = parse_intent(query)
         if intent:
             return intent
-        return "❌ Intent not recognized"
+        return "❌ Intent not recognized. Try: `swap 1 NEAR for USDC`"
     
     # RAG fallback
     context = rag_near_fixed(query)
@@ -134,20 +151,42 @@ def near_assistant(query):
 # ========== STREAMLIT UI ==========
 def main():
     st.title("🤖 Y-24 Chatbot - NEAR Protocol Assistant")
-    st.markdown("**Y-24 Labs: NEAR intents + RAG + Ref Finance**")
+    st.markdown("**Y-24 Labs: NEAR intents + RAG + Ref Finance** ✅ **SWAP BUG FIXED**")
     
-    # Sidebar config
+    # Sidebar config - MULTI-COMMUNITY
     st.sidebar.header("🔧 Config")
     st.sidebar.markdown("### 🤖 **Y-24 Chatbot**")
     st.sidebar.markdown("*Gnomai Labs - NEAR RAG + DEX Assistant*")
     
-    qdrant_url = st.sidebar.text_input("Qdrant URL", type="password", value=st.session_state.get("qdrant_url", ""))
-    qdrant_key = st.sidebar.text_input("Qdrant Key", type="password", value=st.session_state.get("qdrant_key", ""))
+    col1, col2 = st.sidebar.columns(2)
+    with col1:
+        qdrant_url = st.text_input("Qdrant URL", type="password", 
+                                 value=st.session_state.get("qdrant_url", ""))
+    with col2:
+        qdrant_key = st.text_input("Qdrant Key", type="password", 
+                                 value=st.session_state.get("qdrant_key", ""))
     
-    if st.sidebar.button("Save Config"):
+    collection_input = st.sidebar.text_input(
+        "Collection", 
+        value=st.session_state.get("qdrant_collection", "near_docs")
+    )
+    
+    if st.sidebar.button("💾 Save Config"):
         st.session_state["qdrant_url"] = qdrant_url
         st.session_state["qdrant_key"] = qdrant_key
+        st.session_state["qdrant_collection"] = collection_input
         st.sidebar.success("✅ Config saved!")
+    
+    # SWAP TESTER (debug)
+    st.sidebar.markdown("---")
+    st.sidebar.markdown("🧪 **SWAP TESTER**")
+    test_swap = st.sidebar.text_input("Test swap:", "swap 1 NEAR for USDC")
+    if test_swap:
+        parsed = parse_swap_text(test_swap)
+        if parsed:
+            st.sidebar.success(f"✅ FIXED: {parsed['amount']} {parsed['from_token']} → {parsed['to_token']}")
+        else:
+            st.sidebar.error("❌ Invalid format")
     
     # Chat interface
     if "messages" not in st.session_state:
@@ -157,7 +196,7 @@ def main():
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
     
-    if prompt := st.chat_input("Ask about NEAR or try: 'Swap 100 USDC to NEAR'"):
+    if prompt := st.chat_input("Ask about NEAR or try: 'Swap 1 NEAR for USDC'"):
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(prompt)
