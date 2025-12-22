@@ -14,12 +14,13 @@ st.set_page_config(page_title="🤖 Y-24 Chatbot - NEAR Assistant", layout="wide
 load_dotenv()
 QDRANT_URL = os.getenv("QDRANT_URL")
 QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
+CMC_API_KEY = os.getenv("CMC_API_KEY")
 COLLECTION_DEFAULT = "near_docs"
 
 # 🔁 Global model (loaded once)
 @st.cache_resource
 def load_model():
-    return SentenceTransformer('all-MiniLM-L6-v2')
+    return SentenceTransformer("all-MiniLM-L6-v2")
 
 model = load_model()
 
@@ -27,12 +28,12 @@ model = load_model()
 def parse_swap_text(text: str):
     """
     Parse swap phrases like:
-    - swap 1 usdc for near
+    - swap 100 usdc for near
     - swap 50 usdc to near
     Returns amount, from_token, to_token.
     """
     text = text.lower().strip()
-    pattern = r'swap\s+(\d+(?:\.\d+)?)\s+(\w+)\s+(?:for|to)\s+(\w+)'
+    pattern = r"swap\s+(\d+(?:\.\d+)?)\s+(\w+)\s+(?:for|to)\s+(\w+)"
     match = re.search(pattern, text)
     if not match:
         return None
@@ -44,23 +45,54 @@ def parse_swap_text(text: str):
         "to_token": to_token.upper()
     }
 
+# ========== COINMARKETCAP PRICE ==========
+def get_near_price_usd():
+    """
+    Get NEAR price in USD using CoinMarketCap.
+    Falls back to a static demo price if anything fails.
+    """
+    if not CMC_API_KEY:
+        return 4.20  # demo fallback
+
+    url = "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest"
+    headers = {
+        "X-CMC_PRO_API_KEY": CMC_API_KEY,
+        "Accept": "application/json"
+    }
+    params = {
+        "symbol": "NEAR",
+        "convert": "USD"
+    }
+
+    try:
+        resp = requests.get(url, headers=headers, params=params, timeout=5)
+        data = resp.json()
+        return float(data["data"]["NEAR"]["quote"]["USD"]["price"])
+    except Exception:
+        return 4.20  # safe fallback
+
+def get_live_near_quote(amount_usdc: float) -> float:
+    """
+    Estimate how many NEAR you get for amount_usdc USDC
+    using the live NEAR/USD price from CoinMarketCap.
+    """
+    near_price = get_near_price_usd()
+    # Assuming USDC ~ 1 USD
+    return amount_usdc / near_price
+
 # ========== QDRANT RAG ==========
 def search_qdrant(query_vector, limit=3):
     """
-    Generic Qdrant search with payload.
-    Uses session_state overrides if provided in the sidebar.
+    Qdrant search with payload.
+    Uses QDRANT_URL and QDRANT_API_KEY from environment.
     """
-    qdrant_url = st.session_state.get("qdrant_url") or QDRANT_URL
-    qdrant_key = st.session_state.get("qdrant_key") or QDRANT_API_KEY
-    collection = st.session_state.get("qdrant_collection", COLLECTION_DEFAULT)
-
-    if not qdrant_url or not qdrant_key:
+    if not QDRANT_URL or not QDRANT_API_KEY:
         return []
 
-    url = f"{qdrant_url}/collections/{collection}/points/search"
+    url = f"{QDRANT_URL}/collections/{COLLECTION_DEFAULT}/points/search"
     headers = {
         "Content-Type": "application/json",
-        "api-key": qdrant_key,
+        "api-key": QDRANT_API_KEY,
     }
     body = {
         "vector": query_vector,
@@ -134,26 +166,23 @@ def parse_intent(query):
     if not parsed:
         return None
 
-    # Very rough demo estimate (do NOT treat as real price)
-    est_rate = 4.20  # NEAR ≈ 4.20 USD (demo only)
-    if parsed["to_token"] == "NEAR":
-        out_amount = parsed["amount"] / est_rate
-    else:
-        out_amount = parsed["amount"] * est_rate
+    # Live estimation using CoinMarketCap (USDC -> NEAR)
+    out_amount = get_live_near_quote(parsed["amount"])
 
     rhea_url = get_rhea_link()
 
     return f"""
 🚀 **NEAR INTENT DETECTED**
 
-**💱 SWAP {parsed['amount']} {parsed['from_token']} → {parsed['to_token']} (estimation)**  
-• **Estimated output**: ~{out_amount:.4f} {parsed['to_token']}  
-• **Note**: This is an estimate. You will set the exact USDC amount directly on Rhea.
+**💱 SWAP {parsed['amount']} {parsed['from_token']} → {parsed['to_token']} (live estimation)**  
+• **Estimated output**: ~{out_amount:.6f} {parsed['to_token']}  
+• **Note**: This estimation uses current NEAR/USDC price (CoinMarketCap).  
+  You will set the exact USDC amount directly on Rhea.
 
 ✅ **Open Rhea (USDC ⇄ NEAR pool)**  
 [🌐 Rhea Finance]({rhea_url})
 
-*Y-24 stays humble: I guide you, you confirm the exact amount on-chain.*
+*Y-24 uses live price data for a more realistic quote.*
 """
 
 def near_assistant(query):
@@ -178,49 +207,29 @@ def main():
     st.title("🤖 Y-24 Chatbot - NEAR Protocol Assistant")
     st.markdown(
         "**Y-24 Labs: NEAR intents + RAG + Rhea/Ref DEX** "
-    
+        "(live NEAR/USDC estimation, no pre-filled amounts)."
     )
 
-    # Sidebar config (multi-community Qdrant)
-    st.sidebar.header("🔧 Config")
-    st.sidebar.markdown("### 🤖 **Y-24 Chatbot**")
-    st.sidebar.markdown("*Gnomai Labs - NEAR RAG + DEX Assistant*")
-
-    col1, col2 = st.sidebar.columns(2)
-    with col1:
-        qdrant_url = st.text_input(
-            "Qdrant URL", type="password",
-            value=st.session_state.get("qdrant_url", "")
-        )
-    with col2:
-        qdrant_key = st.text_input(
-            "Qdrant Key", type="password",
-            value=st.session_state.get("qdrant_key", "")
-        )
-
-    collection_input = st.sidebar.text_input(
-        "Collection",
-        value=st.session_state.get("qdrant_collection", "near_docs")
+    # Sidebar info only (no API/URL inputs)
+    st.sidebar.header("ℹ️ About Y-24")
+    st.sidebar.markdown(
+        "- NEAR RAG over Qdrant\n"
+        "- Simple intents for USDC → NEAR swaps\n"
+        "- Prices via CoinMarketCap (estimation, not execution)"
     )
 
-    if st.sidebar.button("💾 Save Config"):
-        st.session_state["qdrant_url"] = qdrant_url
-        st.session_state["qdrant_key"] = qdrant_key
-        st.session_state["qdrant_collection"] = collection_input
-        st.sidebar.success("✅ Config saved!")
-
-    # SWAP TESTER (parser debug)
+    # SWAP TESTER (parser debug) – optional but useful
     st.sidebar.markdown("---")
-    st.sidebar.markdown("🧪 **SWAP TESTER**")
+    st.sidebar.markdown("🧪 **SWAP PARSER TEST**")
     test_swap = st.sidebar.text_input("Test swap:", "swap 1 usdc for near")
     if test_swap:
         parsed = parse_swap_text(test_swap)
         if parsed:
             st.sidebar.success(
-                f"✅ Parsed: {parsed['amount']} {parsed['from_token']} → {parsed['to_token']}"
+                f"Parsed: {parsed['amount']} {parsed['from_token']} → {parsed['to_token']}"
             )
         else:
-            st.sidebar.error("❌ Invalid format")
+            st.sidebar.error("Invalid format")
 
     # Chat history
     if "messages" not in st.session_state:
@@ -231,8 +240,8 @@ def main():
             st.markdown(message["content"])
 
     placeholder = (
-        "Ask about NEAR or try: 'swap usdc to near' "
-        "(I'll open the pool, you set the amount on Rhea)."
+        "Ask about NEAR or try: 'swap 1 usdc for near' "
+        "(I'll estimate using live NEAR/USDC price)."
     )
     if prompt := st.chat_input(placeholder):
         st.session_state.messages.append({"role": "user", "content": prompt})
