@@ -5,14 +5,13 @@ import requests
 from qdrant_client import QdrantClient
 from sentence_transformers import SentenceTransformer
 
-# Carga EXPLÍCITA del .env (funciona en venv)
+# Carga EXPLÍCITA del .env
 load_dotenv(dotenv_path='.env')
 
-# Lee DIRECTO del archivo si dotenv falla
+# Lee DIRECTO del archivo (arreglado el None.strip() error)
 def get_env(key, default=''):
     value = os.getenv(key)
     if not value:
-        # Fallback: lee directo del .env
         try:
             with open('.env', 'r') as f:
                 for line in f:
@@ -21,12 +20,12 @@ def get_env(key, default=''):
                         break
         except:
             pass
-    return value.strip()
+    return value if value else default
 
-QDRANT_URL = get_env('QDRANT_URL')
-QDRANT_API_KEY = get_env('QDRANT_API_KEY')
-CMC_API_KEY = get_env('CMC_API_KEY')
-DEEPSEEK_API_KEY = get_env('DEEPSEEK_API_KEY')
+QDRANT_URL = get_env('QDRANT_URL', '')
+QDRANT_API_KEY = get_env('QDRANT_API_KEY', '')
+CMC_API_KEY = get_env('CMC_API_KEY', '')
+DEEPSEEK_API_KEY = get_env('DEEPSEEK_API_KEY', '')
 
 # Sidebar API status
 st.sidebar.title("🔧 API Status")
