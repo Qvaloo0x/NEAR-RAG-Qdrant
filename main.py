@@ -168,7 +168,7 @@ def near_assistant(query):
         intent = parse_intent(query)
         if intent:
             return intent
-        return "❌ Intent not recognized. Example: `swap 100 usdc for near`"
+        return "❌ Intent not recognized. Example: `swap 1 usdc for near`"
     
     context = rag_near_fixed(query)
     return f"📚 **RAG MODE**\n\nSearching NEAR docs for: '{query}'\n\n{context[:500]}..."
