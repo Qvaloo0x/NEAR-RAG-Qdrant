@@ -178,7 +178,7 @@ def main():
     st.title("🤖 Y-24 Chatbot - NEAR Protocol Assistant")
     st.markdown(
         "**Y-24 Labs: NEAR intents + RAG + Rhea/Ref DEX** "
-        "(no fake promises about pre-filled amounts)."
+    
     )
 
     # Sidebar config (multi-community Qdrant)
