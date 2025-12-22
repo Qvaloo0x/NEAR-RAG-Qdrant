@@ -27,7 +27,7 @@ model = load_model()
 def parse_swap_text(text: str):
     """
     Parse swap phrases like:
-    - swap 100 usdc for near
+    - swap 1 usdc for near
     - swap 50 usdc to near
     Returns amount, from_token, to_token.
     """
@@ -212,7 +212,7 @@ def main():
     # SWAP TESTER (parser debug)
     st.sidebar.markdown("---")
     st.sidebar.markdown("🧪 **SWAP TESTER**")
-    test_swap = st.sidebar.text_input("Test swap:", "swap 100 usdc for near")
+    test_swap = st.sidebar.text_input("Test swap:", "swap 1 usdc for near")
     if test_swap:
         parsed = parse_swap_text(test_swap)
         if parsed:
