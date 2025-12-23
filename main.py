@@ -38,7 +38,7 @@ qdrant_client, model = init_clients()
 
 def get_near_price_usd():
     if not CMC_API_KEY:
-        return 4.20
+        return 1.50
     
     try:
         url = "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest"
@@ -49,7 +49,7 @@ def get_near_price_usd():
             return float(resp.json()["data"]["NEAR"]["quote"]["USD"]["price"])
     except:
         pass
-    return 4.20
+    return 1.50
 
 def parse_swap(query):
     if "swap" in query.lower() and "for near" in query.lower():
