@@ -63,7 +63,7 @@ def parse_swap(query):
     return None
 
 # UI
-st.title("🤖 NEAR RAG Assistant")
+st.title("🤖 Y-24 NEAR RAG Assistant")
 st.markdown("**Try:** `swap 1 usdc for near`")
 
 # Sidebar SIMPLE
