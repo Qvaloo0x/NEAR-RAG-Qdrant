@@ -10,7 +10,6 @@ load_dotenv()
 CMC_API_KEY = os.getenv("CMC_API_KEY") or "6149fceb68f646848f2a0fe0299aba1a"
 
 def get_near_price():
-    """Precio REAL CMC - REEMPLAZA el 4.20 fijo"""
     try:
         url = "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest"
         headers = {"X-CMC_PRO_API_KEY": CMC_API_KEY, "Accept": "application/json"}
@@ -20,10 +19,9 @@ def get_near_price():
             return float(resp.json()["data"]["NEAR"]["quote"]["USD"]["price"])
     except:
         pass
-    return 1.75  # Fallback mejor que 4.20
+    return 1.75
 
 def parse_swap_text(text):
-    """Parse: swap 1 usdc for near → {amount: 1.0, from: USDC, to: NEAR}"""
     text = text.lower().strip()
     pattern = r"swap\s+(\d+(?:\.\d+)?)\s+(\w+)\s+(?:for|to)\s+(\w+)"
     match = re.search(pattern, text)
@@ -35,11 +33,9 @@ def parse_swap_text(text):
 st.title("🤖 Y-24 NEAR Swap Bot")
 st.markdown("*Say: `swap 1 usdc for near`*")
 
-# Sidebar status (como tenías antes)
 with st.sidebar:
     st.metric("CMC Key", f"{len(CMC_API_KEY)} chars")
 
-# Chat history
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -47,7 +43,6 @@ for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# 🔥 INPUT - TU LÓGICA ORIGINAL + RHEA LINK
 if prompt := st.chat_input("Try: swap 1 usdc for near"):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
@@ -57,15 +52,12 @@ if prompt := st.chat_input("Try: swap 1 usdc for near"):
         parsed = parse_swap_text(prompt)
         if parsed:
             amount, from_token, to_token = parsed
-            price = get_near_price()  # ← CAMBIO: precio REAL
+            price = get_near_price()
             
             if to_token == "NEAR":
                 near_out = amount / price
-                st.markdown(f"""
-✅ **SWAP**: {amount} {from_token} → {near_out:.6f} NEAR 💰 Price: ${price:.4f}
-
-**🔗 Rhea Finance:** [app.rhea.finance](https://app.rhea.finance/)
-                """)
+                st.markdown(f"✅ **SWAP**: {amount} {from_token} → {near_out:.6f} NEAR 💰 Price: ${price:.4f}")
+                st.markdown("**🔗 [Rhea Finance](https://app.rhea.finance/)**")
             else:
                 st.info("Only USDC→NEAR")
         else:
