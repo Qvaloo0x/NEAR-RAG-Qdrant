@@ -29,7 +29,7 @@ def is_swap(query):
     q = query.lower()
     return "swap" in q and "usdc" in q and "near" in q
 
-# 🔥 NEAR FAQ DATABASE (GRATIS - sin APIs externas)
+# 🔥 NEAR FAQ DATABASE (GRATIS)
 NEAR_FAQ = {
     "sharding": "Nightshade sharding: 100k+ TPS, dynamic resharding, stateless validation, cross-shard messaging",
     "nightshade": "NEAR's sharding protocol. Epoch-based re-sharding, one-shard-at-a-time validation, chunk-only state",
@@ -46,7 +46,7 @@ NEAR_FAQ = {
 st.title("🤖 Y-24 NEAR Assistant")
 st.markdown("**Rhea Swaps | NEAR Technical Docs | Live Prices**")
 
-# 🔥 SIDEBAR ENHANCED
+# 🔥 SIDEBAR
 with st.sidebar:
     st.header("🔧 Status")
     st.metric("CMC Key", f"{len(CMC_API_KEY)} chars ✓")
@@ -77,7 +77,7 @@ if prompt := st.chat_input("Try: `swap 1 usdc for near` or ask about NEAR Protoc
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        # PRIORITY 1: SWAP
+        # PRIORITY 1: SWAP (formato SIMPLE como antes)
         if is_swap(prompt):
             numbers = re.findall(r'\d+(?:\.\d+)?', prompt.lower())
             amount = float(numbers[0]) if numbers else 1.0
@@ -85,39 +85,19 @@ if prompt := st.chat_input("Try: `swap 1 usdc for near` or ask about NEAR Protoc
             near_out = amount / price
             
             st.markdown(f"""
-<div style='border: 3px solid #10b981; border-radius: 16px; padding: 24px; background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);'>
-    <h2 style='color: #065f46; margin: 0 0 20px 0; font-size: 1.8em;'>🚀 SWAP CONFIRMED</h2>
-    
-    <div style='background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.15);'>
-        <div style='font-size: 1.4em; margin-bottom: 10px;'>
-            <span style='color: #059669;'>💱 {amount} USDC</span> 
-            <span style='color: #dc2626;'>→</span> 
-            <span style='color: #059669; font-weight: bold; font-size: 1.6em;'>{near_out:.6f} NEAR</span>
-        </div>
-        <div style='font-size: 1.1em; color: #374151;'>
-            💰 <strong>Price:</strong> <span style='color: #dc2626; font-weight: bold;'>${price:.4f}</span>
-        </div>
-    </div>
-    
-    <a href='https://app.rhea.finance/' target='_blank' 
-       style='display: inline-block; background: linear-gradient(45deg, #3b82f6, #1d4ed8); color: white; padding: 16px 32px; 
-              border-radius: 50px; text-decoration: none; font-weight: bold; font-size: 18px; 
-              box-shadow: 0 8px 25px rgba(59,130,246,0.4); transition: transform 0.2s;'>
-        🔗 OPEN RHEA FINANCE
-    </a>
-    
-    <p style='margin: 20px 0 0 0; font-size: 0.95em; color: #6b7280;'>
-        *Rhea Finance = Native NEAR DEX for USDC↔NEAR swaps*
-    </p>
-</div>
-            """, unsafe_allow_html=True)
+✅ **SWAP**: {amount} USDC → **{near_out:.6f} NEAR** 💰 Price: **${price:.4f}**
+
+**🔗 [Rhea Finance](https://app.rhea.finance/)**
+
+*Native NEAR DEX for USDC↔NEAR swaps*
+            """)
             
-        # PRIORITY 2: NEAR TECHNICAL FAQ
+        # PRIORITY 2: NEAR FAQ
         else:
             q_lower = prompt.lower()
             response = None
             
-            # Busca en FAQ database
+            # Busca exact match en FAQ
             for topic, answer in NEAR_FAQ.items():
                 if topic in q_lower:
                     response = f"""**{topic.upper()}**  
@@ -135,10 +115,10 @@ if prompt := st.chat_input("Try: `swap 1 usdc for near` or ask about NEAR Protoc
 • `swap 100 usd for near`
 
 **📚 Technical:**
-• `sharding explained`
-• `Nightshade details` 
-• `validator requirements`
-• `how to stake`
+• `sharding` 
+• `Nightshade`
+• `stake`
+• `validator`
 • `chain abstraction`
 • `account model`
 
