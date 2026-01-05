@@ -33,14 +33,14 @@ def parse_swap_text(text):
 st.title("🤖 Y-24 NEAR Assistant")
 st.markdown("**Swaps → Rhea | Questions → NEAR Docs**")
 
-# 🔥 SIDEBAR MEJORADO
+# 🔥 ENHANCED SIDEBAR
 with st.sidebar:
     st.header("🔧 Status")
     st.metric("CMC Key", f"{len(CMC_API_KEY)} chars")
     price = get_near_price()
     st.metric("NEAR Price", f"${price:.4f}")
     st.markdown("---")
-    st.info("💬 **Prueba:**\n• `swap 10 usdc for near`\n• `qué es NEAR`\n• `cómo stakeo`")
+    st.info("💬 **Try:**\n• `swap 10 usdc for near`\n• `what is NEAR`\n• `how to stake`")
 
 # Chat history
 if "messages" not in st.session_state:
@@ -50,8 +50,8 @@ for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# 🔥 INPUT PRINCIPAL
-if prompt := st.chat_input("Try: `swap 1 usdc for near` o pregunta sobre NEAR"):
+# 🔥 MAIN INPUT
+if prompt := st.chat_input("Try: `swap 1 usdc for near` or ask about NEAR"):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
@@ -63,7 +63,7 @@ if prompt := st.chat_input("Try: `swap 1 usdc for near` o pregunta sobre NEAR"):
             amount, from_token, to_token = parsed
             price = get_near_price()
             
-            # 🔥 SWAP MEJORADO - Más comandos
+            # 🔥 ENHANCED SWAP - More commands
             if from_token in ["USDC", "USD"] and to_token == "NEAR":
                 near_out = amount / price
                 st.markdown(f"""
@@ -71,38 +71,38 @@ if prompt := st.chat_input("Try: `swap 1 usdc for near` o pregunta sobre NEAR"):
 
 **🔗 [Rhea Finance](https://app.rhea.finance/)**
 
-*DEX nativo NEAR para swaps USDC↔NEAR*
+*Native NEAR DEX for USDC↔NEAR swaps*
                 """)
             else:
-                st.warning("💱 Solo `USDC/USD → NEAR` por ahora")
+                st.warning("💱 Only `USDC/USD → NEAR` for now")
                 
         else:
-            # 🔥 RAG SIMPLE - Preguntas NEAR
+            # 🔥 SIMPLE RAG - NEAR Questions
             q = prompt.lower()
-            if "qué es" in q or "que es" in q or "near protocol" in q:
+            if any(x in q for x in ["what is", "que es", "near protocol"]):
                 st.markdown("""
-**🤖 NEAR Protocol** es una blockchain layer-1 con:
+**🤖 NEAR Protocol** is a layer-1 blockchain featuring:
 
 🔥 **Key features:**
-• **Sharding nativo** (Nightshade) → 100k+ TPS
+• **Native sharding** (Nightshade) → 100k+ TPS
 • **Fees** ~$0.01
 • **EVM + WASM** compatible
-• **Account abstraction** nativa
+• **Account abstraction** native
                 """)
                 
-            elif "stake" in q or "staking" in q:
+            elif any(x in q for x in ["stake", "staking"]):
                 st.markdown("""
 **💰 Staking NEAR:**
 1. [wallet.near.org](https://wallet.near.org)
-2. **Pool** → Stake → Elige validator
+2. **Pool** → Stake → Choose validator
 3. **~10% APY**
 
-**Pools top:** MetaPool, StakeFish
+**Top pools:** MetaPool, StakeFish
                 """)
                 
-            elif "bridge" in q or "puente" in q:
+            elif any(x in q for x in ["bridge", "puente"]):
                 st.markdown("""
-**🌉 Bridges a NEAR:**
+**🌉 Bridges to NEAR:**
 • [Rainbow Bridge](https://rainbowbridge.app) ← ETH/USDC
 • [LayerZero](https://layerzero.network) ← Multi-chain
 • [Axelar](https://axelar.network) ← Cosmos/Solana
@@ -110,12 +110,12 @@ if prompt := st.chat_input("Try: `swap 1 usdc for near` o pregunta sobre NEAR"):
                 
             else:
                 st.info("""
-**💡 Comandos disponibles:**
+**💡 Available commands:**
 • `swap 10 usdc for near`
 • `swap 100 usd for near`
-• `"qué es NEAR"`
-• `"cómo stakeo"`
-• `"bridge eth to near"`
+• `what is NEAR`
+• `how to stake`
+• `bridge eth to near`
                 """)
     
     st.session_state.messages.append({"role": "assistant", "content": "OK"})
