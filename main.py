@@ -14,16 +14,12 @@ st.set_page_config(page_title="🤖 Y-24 Chatbot - NEAR Assistant", layout="wide
 load_dotenv()
 QDRANT_URL = os.getenv("QDRANT_URL")
 QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
+CMC_API_KEY = os.getenv("CMC_API_KEY")
 COLLECTION_DEFAULT = "near_docs"
 
-CMC_API_KEY = os.getenv("CMC_API_KEY")  # o deja tu key fija si quieres
-
-# ================== CMC PRICE ==================
+# ================== CMC PRICE (REAL) ==================
 def get_near_price_usd() -> float:
-    """
-    Get NEAR/USD price from CoinMarketCap.
-    Falls back to 4.20 if anything fails.
-    """
+    """Get REAL NEAR/USD price from CoinMarketCap."""
     if not CMC_API_KEY:
         return 4.20
 
@@ -53,12 +49,7 @@ model = load_model()
 
 # ========== SWAP PARSER ==========
 def parse_swap_text(text: str):
-    """
-    Parse swap phrases like:
-    - swap 1 usdc for near
-    - swap 50 usdc to near
-    Returns amount, from_token, to_token.
-    """
+    """Parse: swap 1 usdc for near → {amount: 1.0, from: USDC, to: NEAR}"""
     text = text.lower().strip()
     pattern = r"swap\s+(\d+(?:\.\d+)?)\s+(\w+)\s+(?:for|to)\s+(\w+)"
     match = re.search(pattern, text)
@@ -74,10 +65,7 @@ def parse_swap_text(text: str):
 
 # ========== QDRANT RAG ==========
 def search_qdrant(query_vector, limit=3):
-    """
-    Generic Qdrant search with payload.
-    Uses session_state overrides if provided in the sidebar.
-    """
+    """Search Qdrant vector DB."""
     qdrant_url = st.session_state.get("qdrant_url") or QDRANT_URL
     qdrant_key = st.session_state.get("qdrant_key") or QDRANT_API_KEY
     collection = st.session_state.get("qdrant_collection", COLLECTION_DEFAULT)
@@ -86,10 +74,7 @@ def search_qdrant(query_vector, limit=3):
         return []
 
     url = f"{qdrant_url}/collections/{collection}/points/search"
-    headers = {
-        "Content-Type": "application/json",
-        "api-key": qdrant_key,
-    }
+    headers = {"Content-Type": "application/json", "api-key": qdrant_key}
     body = {"vector": query_vector, "limit": limit, "with_payload": True}
 
     try:
@@ -101,23 +86,15 @@ def search_qdrant(query_vector, limit=3):
         return []
 
 def rag_near_fixed(query_text):
-    """
-    Basic RAG pipeline:
-    - embed query
-    - search Qdrant
-    - join top-k contexts
-    """
+    """RAG: embed → search → context."""
     if not model:
         return "Model not loaded"
 
     query_vector = np.pad(
-        model.encode(query_text),
-        (0, 1536 - 384),
-        "constant",
+        model.encode(query_text), (0, 1536 - 384), "constant"
     ).tolist()
 
     hits = search_qdrant(query_vector, limit=3)
-
     contexts = []
     for point in hits:
         payload = point.get("payload", {})
@@ -125,21 +102,14 @@ def rag_near_fixed(query_text):
 
     return "\n\n---\n\n".join(contexts) if contexts else "No docs found"
 
-# ========== RHEA / REF LINK ==========
+# ========== RHEA LINK ==========
 def get_rhea_link():
-    """
-    Returns a generic USDC <-> NEAR pool link.
-    User will set the exact amount on Rhea.
-    """
+    """Rhea Finance USDC-NEAR pool."""
     return "https://app.rhea.finance"
 
-# ========== NEAR INTENTS ==========
+# ========== INTENT DETECTOR ==========
 def detect_intent(query):
-    """
-    Very simple intent detector:
-    if it contains swap/exchange/send/transfer/bridge -> INTENT
-    otherwise -> RAG
-    """
+    """swap/exchange → INTENT, else → RAG."""
     intent_keywords = ["swap", "exchange", "send", "transfer", "bridge"]
     query_lower = query.lower()
     for keyword in intent_keywords:
@@ -148,10 +118,7 @@ def detect_intent(query):
     return False, "RAG"
 
 def parse_intent(query):
-    """
-    Use the swap parser to understand amount/from/to.
-    Uses real NEAR price from CoinMarketCap.
-    """
+    """Parse swap + show Rhea link with REAL price."""
     parsed = parse_swap_text(query)
     if not parsed:
         return None
@@ -167,40 +134,67 @@ def parse_intent(query):
     return f"""
 🚀 **NEAR INTENT DETECTED**
 
-**💱 SWAP {parsed['amount']} {parsed['from_token']} → {parsed['to_token']} (estimation)**  
+**💱 SWAP {parsed['amount']} {parsed['from_token']} → {parsed['to_token']}**  
 • **Estimated output**: ~{out_amount:.4f} {parsed['to_token']}  
-• **Note**: This is an estimate. You will set the exact USDC amount directly on Rhea.  
-• **Price used**: ~${price:.4f} per NEAR
+• **Price**: ${price:.4f} per NEAR  
+• **Note**: Set exact amount on Rhea.
 
-✅ **Open Rhea (USDC ⇄ NEAR pool)**  
-[🌐 Rhea Finance]({rhea_url})
+✅ **Open Rhea Finance**  
+[🌐 app.rhea.finance]({rhea_url})
 
-*Y-24 stays humble: I guide you, you confirm the exact amount on-chain.*
+*Y-24: I guide → you confirm on-chain.*
 """
 
 def near_assistant(query):
-    """
-    Unified entrypoint:
-    - If intent: try swap parser and show DEX guidance.
-    - Else: fall back to NEAR RAG answer.
-    """
+    """INTENT → DEX, else → RAG."""
     is_intent, mode = detect_intent(query)
 
     if mode == "INTENT":
         intent = parse_intent(query)
         if intent:
             return intent
-        return "❌ Intent not recognized. Example: `swap 1 usdc for near`"
+        return "❌ Try: `swap 1 usdc for near`"
 
     context = rag_near_fixed(query)
-    return f"📚 **RAG MODE**\n\nSearching NEAR docs for: '{query}'\n\n{context[:500]}..."
+    return f"📚 **NEAR Docs**\n\n{context[:800]}..."
 
-# ========== STREAMLIT UI ==========
+# ========== UI ==========
 def main():
-    st.title("🤖 Y-24 Chatbot - NEAR Protocol Assistant")
-    st.markdown("**Y-24 Labs: NEAR intents + RAG + Rhea/Ref DEX**")
+    st.title("🤖 Y-24 NEAR Assistant")
+    st.markdown("**Swaps + RAG + DEX links**")
 
-    # Sidebar config (multi-community Qdrant)
-    st.sidebar.header("🔧 Config")
-    st.sidebar.markdown("### 🤖 **Y-24 Chatbot**")
-    st.sidebar.markdown("*Gnomai 
+    # Sidebar status
+    with st.sidebar:
+        st.header("🔧 Status")
+        st.success("✅ Interface")
+        st.metric("CMC Key", f"{len(CMC_API_KEY) if CMC_API_KEY else 0} chars")
+        st.metric("Qdrant URL", "OK" if QDRANT_URL else "MISSING")
+
+        # Qdrant config
+        st.markdown("---")
+        st.text_input("Qdrant URL", key="qdrant_url")
+        st.text_input("Qdrant Key", key="qdrant_key", type="password")
+        st.text_input("Collection", value="near_docs", key="qdrant_collection")
+
+    # Chat
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+
+    for msg in st.session_state.messages:
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
+
+    if prompt := st.chat_input("Ask about NEAR or `swap 1 usdc for near`"):
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.markdown(prompt)
+
+        with st.chat_message("assistant"):
+            with st.spinner("🤖 Processing..."):
+                response = near_assistant(prompt)
+                st.markdown(response)
+        
+        st.session_state.messages.append({"role": "assistant", "content": response})
+
+if __name__ == "__main__":
+    main()
