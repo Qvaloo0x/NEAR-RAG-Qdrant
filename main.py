@@ -168,3 +168,10 @@ if prompt := st.chat_input("Pregunta sobre NEAR o `swap 1 usdc for near`"):
     
     # Save assistant message (empty porque response se renderiza directo)
     st.session_state.messages.append({"role": "assistant", "content": "processed"})
+
+# 🔥 LIMPIAR CACHE - AGREGAR AL FINAL
+if st.sidebar.button("🧹 Clear Cache & Rerun"):
+    st.cache_data.clear()
+    st.cache_resource.clear()
+    st.rerun()
+
